@@ -30,3 +30,6 @@ update-alternatives --force --install /usr/local/bin/llvm-config llvm-config /us
 update-alternatives --force --install /usr/local/bin/clang++ clang++ /usr/bin/clang++-3.8 0
 # And we might as well make a clang link so we can compile mozilla-central:
 update-alternatives --force --install /usr/local/bin/clang clang /usr/bin/clang-3.8 0
+
+# install ninja
+apt-get -q -y install ninja-build vim

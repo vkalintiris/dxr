@@ -31,5 +31,9 @@ update-alternatives --force --install /usr/local/bin/clang++ clang++ /usr/bin/cl
 # And we might as well make a clang link so we can compile mozilla-central:
 update-alternatives --force --install /usr/local/bin/clang clang /usr/bin/clang-3.8 0
 
-# install ninja
-apt-get -q -y install ninja-build vim
+# install deps we need to build our projects
+apt-get -q -y install \
+  htop vim \
+  ninja-build uuid-dev libicu-dev icu-devtools libbsd-dev libedit-dev \
+  libxml2-dev libsqlite3-dev swig libpython-dev libncurses5-dev pkg-config \
+  libblocksruntime-dev libcurl4-openssl-dev

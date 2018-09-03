@@ -22,6 +22,8 @@ RUN DEBIAN_FRONTEND=noninteractive /tmp/set_up_common.sh
 COPY set_up_cmake.sh /tmp/
 RUN DEBIAN_FRONTEND=noninteractive /tmp/set_up_cmake.sh
 
+COPY build_with_dxr /usr/local/bin
+
 # Give root a known password so devs can become root:
 RUN echo "root:docker" | chpasswd
 

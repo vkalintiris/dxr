@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 import os
 import subprocess
-import json
+import sys
 
 def find_compilation_databases(build_path):
     for root, dirs, entries in os.walk(os.path.abspath(build_path)):
@@ -23,29 +24,33 @@ def create_xargs_file(compilation_database):
 
         command = entry['command'].split()
 
-        # Make sure we have a Clang/Clang++ compiler
-        binary = os.path.basename(command[0])
-        if binary == 'cc':
-            binary = 'clang'
-        elif binary == 'c++':
-            binary = 'clang++'
-        command[0] = binary
+        o_index = command.index('-o')
+        object_file = os.path.join(entry['directory'], command[o_index+1])
+        if not os.path.isfile(object_file):
+            continue
 
-        # Replace -c with -E
+        # Dump output to /dev/null
+        command[o_index+1] = '/dev/null'
+
+        # Replace compiler
+        compiler = command[0]
+        if compiler.endswith('cc') or compiler.endswith('clang'):
+            compiler = 'clang'
+        elif compiler.endswith('c++') or compiler.endswith('clang++'):
+            compiler = 'clang++'
+        command[0] = compiler
+
+        # Preprocess instead of compiling
         c_index = command.index('-c')
         command[c_index] = '-E'
 
-        # Replace -o /path/to/foo.o with -o /dev/null
-        o_index = command.index('-o')
-        object_file = os.path.join(entry['directory'], command[o_index+1])
-        command[o_index+1] = '/dev/null'
-
+	# Add the C++ flags we want
         command.insert(1, cxx_flags)
 
-        # We only add commands whose object file exists, in case the
-        # original command didn't actually run as part of the build process.
-        if os.path.isfile(object_file):
-            xargs_commands.append(' '.join(command))
+	# Stop xargs on failure
+	command.extend(['||', 'exit', '255'])
+
+        xargs_commands.append(' '.join(command))
 
     root = os.path.dirname(compilation_database)
     xargs_file = os.path.join(root, 'compilation_commands.xargs')

@@ -12,12 +12,23 @@ def find_compilation_databases(build_path):
             if entry == 'compile_commands.json':
                 yield os.path.join(root, entry)
 
+def hacks(command):
+    # Remove -DCMAKE_CFG_INTDIR because it requires weird escaping
+    for elm in command:
+        if elm.startswith('-DCMAKE_CFG_INTDIR'):
+            command.remove(elm)
+
+    return command
+
 def create_xargs_file(compilation_database):
     with open(compilation_database) as fp:
         json_data = json.load(fp)
 
+    cxx_flags = os.getenv('DXR_CLANG_FLAGS')
+    assert cxx_flags is not None
+
     xargs_commands = []
-    cxx_flags = os.getenv('CXX_FLAGS')
+
     for entry in json_data:
         if '/swift/stdlib/' in entry['file']:
             continue
@@ -42,13 +53,15 @@ def create_xargs_file(compilation_database):
 
         # Preprocess instead of compiling
         c_index = command.index('-c')
-        command[c_index] = '-E'
+        command[c_index] = '-fsyntax-only'
 
 	# Add the C++ flags we want
         command.insert(1, cxx_flags)
 
 	# Stop xargs on failure
 	command.extend(['||', 'exit', '255'])
+
+        command = hacks(command)
 
         xargs_commands.append(' '.join(command))
 

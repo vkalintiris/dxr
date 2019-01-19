@@ -16,9 +16,6 @@ MAINTAINER Erik Rose <erik@mozilla.com>
 COPY set_up_ubuntu.sh /tmp/
 RUN DEBIAN_FRONTEND=noninteractive /tmp/set_up_ubuntu.sh
 
-COPY set_up_common.sh /tmp/
-RUN DEBIAN_FRONTEND=noninteractive /tmp/set_up_common.sh
-
 COPY set_up_cmake.sh /tmp/
 RUN DEBIAN_FRONTEND=noninteractive /tmp/set_up_cmake.sh
 
@@ -36,10 +33,13 @@ RUN echo "dxr:docker" | chpasswd
 VOLUME /home/dxr/dxr
 USER dxr
 
+COPY set_up_common.sh /tmp/
+RUN DEBIAN_FRONTEND=noninteractive /tmp/set_up_common.sh
+
 # Activate a virtualenv. make will make it later. Also, set SHELL so mach
 # doesn't complain while building Firefox. Other things probably expect it as
 # well.
-ENV VIRTUAL_ENV=/venv PATH=/opt/cmake/bin:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin SHELL=/bin/bash
+ENV VIRTUAL_ENV=/venv PATH=/home/dxr/.cargo/bin:/opt/cmake/bin:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin SHELL=/bin/bash
 
 WORKDIR /home/dxr/dxr
 

@@ -4,3 +4,8 @@
 
 # Install Rust.
 curl https://sh.rustup.rs -sSf | sh -s -- -v -y
+
+# Setup nightly channel
+export PATH="$HOME/.cargo/bin:$PATH"
+rustup install nightly
+rustup default nightly

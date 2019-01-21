@@ -64,7 +64,7 @@ shell: docker_es
 
 build: docker_es
 	$(DOCKER_COMPOSE) build dev
-	$(DOCKER_COMPOSE) run dev /usr/bin/make test
+	$(DOCKER_COMPOSE) run dev /usr/bin/make all
 
 # Shut down the elasticsearch server when you're done.
 docker_stop:

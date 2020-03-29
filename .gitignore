@@ -1,6 +1,7 @@
 *.pyc
 *.o
 *.so
+*.dylib
 /dxr/build
 /dxr/static
 /dxr/static_manifest

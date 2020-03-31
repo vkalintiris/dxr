@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+import argparse
+import json
+import os
+import pprint
+import shlex
+import subprocess
+import sys
+
+
+#DXR_CLANG_FLAGS = os.getenv('DXR_CLANG_FLAGS')
+#assert DXR_CLANG_FLAGS is not None
+
+
+def hacks(command):
+    # Remove -DCMAKE_CFG_INTDIR because it requires weird escaping
+    for elm in command:
+        if elm.startswith('-DCMAKE_CFG_INTDIR'):
+            command.remove(elm)
+
+    return command
+
+
+def create_xargs_file(compilation_database):
+    with open(compilation_database) as fp:
+        json_data = json.load(fp)
+
+
+    xargs_commands = []
+
+    for entry in json_data:
+        if '/swift/stdlib/' in entry['file']:
+            continue
+
+        command = shlex.split(entry['command'])
+
+        o_index = command.index('-o')
+        object_file = os.path.join(entry['directory'], command[o_index+1])
+        if not os.path.isfile(object_file):
+            continue
+
+        # Dump output to /dev/null
+        command[o_index+1] = '/dev/null'
+
+        # Replace compiler
+        compiler = command[0]
+        if compiler.endswith(('/cc', '/clang')):
+            compiler = '$DXR_CC'
+        if compiler.endswith(('/c++', '/clang++')):
+            compiler = '$DXR_CXX'
+        command[0] = compiler
+
+        # Preprocess instead of compiling
+        c_index = command.index('-c')
+        command[c_index] = '-fsyntax-only'
+
+	# Add the C++ flags we want
+        #command.insert(1, DXR_CLANG_FLAGS)
+
+        #command = hacks(command)
+
+        xargs_commands.append('-c "{} || exit 255"'.format(' '.join(command)))
+
+    root = os.path.dirname(compilation_database)
+    xargs_file = os.path.join(root, 'compilation_commands.xargs')
+    with open(xargs_file, 'w') as fp:
+        fp.write('\n'.join(xargs_commands))
+
+    return xargs_file
+
+
+def call_xargs(xargs_file):
+    os.chdir(os.path.dirname(xargs_file))
+
+    cmd = f'cat {xargs_file} | xargs -t -L1 -P16 sh'
+    try:
+        subprocess.check_call(cmd, shell=True)
+    except Exception as exc:
+        print(str(exc))
+
+
+if __name__ == '__main__':
+    compilation_databases = sys.argv[1:]
+
+    xargs_files = [
+        create_xargs_file(compilation_database)
+        for compilation_database in compilation_databases
+    ]
+
+    for xargs_file in xargs_files:
+        call_xargs(xargs_file)

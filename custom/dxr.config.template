@@ -1,0 +1,12 @@
+[DXR]
+log_folder = LOG_FOLDER
+temp_folder = TEMP_FOLDER
+enabled_plugins = clang pygmentize
+disabled_plugins = python buglink xpidl
+skip_stages = clean
+workers = 4
+
+[tree]
+source_folder       = SOURCE_FOLDER
+object_folder       = OBJECT_FOLDER
+build_command       = build_with_dxr COMPILE_COMMANDS
